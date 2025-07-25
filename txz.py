@@ -48,24 +48,142 @@ FLOOR = ' '
 BOX_ON_TARGET = '*'
 PLAYER_ON_TARGET = '+'
 
-# 游戏地图 (9x9)
-level = [
-    "#########",
-    "#   #   #",
-    "#   $   #",
-    "#  $@#  #",
-    "#   $   #",
-    "# ..#   #",
-    "#  .#   #",
-    "#   #   #",
-    "#########"
+# 游戏关卡数据 (10关，难度递增)
+levels = [
+    # 第1关 - 入门级
+    [
+        "#########",
+        "#   #   #",
+        "#   $   #",
+        "#  $@#  #",
+        "#   $   #",
+        "# ..#   #",
+        "#  .#   #",
+        "#   #   #",
+        "#########"
+    ],
+    # 第2关 - 简单
+    [
+        "#########",
+        "#       #",
+        "# $ $ $ #",
+        "#   @   #",
+        "#       #",
+        "# . . . #",
+        "#       #",
+        "#       #",
+        "#########"
+    ],
+    # 第3关 - 基础推理
+    [
+        "#########",
+        "#  #    #",
+        "#  $  $ #",
+        "#  # @  #",
+        "#  $  $ #",
+        "#  #    #",
+        "# ... . #",
+        "#       #",
+        "#########"
+    ],
+    # 第4关 - 路径规划
+    [
+        "#########",
+        "# #   # #",
+        "# $ $ $ #",
+        "#   @   #",
+        "# $ $ $ #",
+        "# #   # #",
+        "#.......#",
+        "#       #",
+        "#########"
+    ],
+    # 第5关 - 狭窄通道
+    [
+        "#########",
+        "#   #   #",
+        "# $ # $ #",
+        "#   @   #",
+        "# $ # $ #",
+        "#   #   #",
+        "#.#.#.#.#",
+        "#       #",
+        "#########"
+    ],
+    # 第6关 - 复杂布局
+    [
+        "#########",
+        "# #   # #",
+        "#  $#$  #",
+        "# # @ # #",
+        "#  $#$  #",
+        "# #   # #",
+        "#  ...  #",
+        "#   .   #",
+        "#########"
+    ],
+    # 第7关 - 多步推理
+    [
+        "#########",
+        "#       #",
+        "# $$$ $ #",
+        "#   @   #",
+        "# $ $$$ #",
+        "#       #",
+        "#.......#",
+        "#   .   #",
+        "#########"
+    ],
+    # 第8关 - 陷阱关卡
+    [
+        "#########",
+        "# # # # #",
+        "#  $@$  #",
+        "# # # # #",
+        "#  $ $  #",
+        "# # # # #",
+        "#  ...  #",
+        "#   .   #",
+        "#########"
+    ],
+    # 第9关 - 高级策略
+    [
+        "#########",
+        "#  ###  #",
+        "# $   $ #",
+        "### @ ###",
+        "# $   $ #",
+        "#  ###  #",
+        "# ..... #",
+        "#   .   #",
+        "#########"
+    ],
+    # 第10关 - 大师级
+    [
+        "#########",
+        "# $ $ $ #",
+        "#  $@$  #",
+        "# $ $ $ #",
+        "#  $ $  #",
+        "# $ $ $ #",
+        "#.......#",
+        "# ..... #",
+        "#########"
+    ]
 ]
+
+# 当前关卡
+current_level = 0
+level = levels[current_level]
 
 # 游戏状态
 player_pos = None
 boxes = []
 targets = []
 walls = []
+game_state = "menu"  # "menu", "playing", "level_select"
+selected_menu_item = 0
+selected_level = 0
 
 # 移动方向向量
 UP = (0, -1)
@@ -75,7 +193,8 @@ RIGHT = (1, 0)
 
 # 初始化游戏地图
 def init_game():
-    global player_pos, boxes, targets, walls
+    global player_pos, boxes, targets, walls, level
+    level = levels[current_level]
     player_pos = None
     boxes = []
     targets = []
@@ -91,6 +210,13 @@ def init_game():
                 targets.append([x, y])
             if cell == WALL:
                 walls.append([x, y])
+
+# 切换到指定关卡
+def switch_level(level_num):
+    global current_level
+    if 0 <= level_num < len(levels):
+        current_level = level_num
+        init_game()
 
 # 检查位置是否是墙壁
 def is_wall(pos):
@@ -138,8 +264,69 @@ def check_win():
             return False
     return True
 
+# 绘制主菜单
+def draw_menu():
+    screen.fill(BACKGROUND)
+    
+    # 标题
+    title_font = get_font(48)
+    title_text = title_font.render("推箱子游戏", True, TEXT_COLOR)
+    screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 100))
+    
+    # 菜单选项
+    menu_font = get_font(32)
+    menu_items = ["开始游戏", "选择关卡", "退出游戏"]
+    
+    for i, item in enumerate(menu_items):
+        color = (255, 255, 100) if i == selected_menu_item else TEXT_COLOR
+        text = menu_font.render(item, True, color)
+        y_pos = 250 + i * 60
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, y_pos))
+    
+    # 说明文字
+    info_font = get_font(20)
+    info_text = info_font.render("使用上下键选择，回车确认", True, TEXT_COLOR)
+    screen.blit(info_text, (SCREEN_WIDTH // 2 - info_text.get_width() // 2, 450))
+
+# 绘制关卡选择界面
+def draw_level_select():
+    screen.fill(BACKGROUND)
+    
+    # 标题
+    title_font = get_font(36)
+    title_text = title_font.render("选择关卡", True, TEXT_COLOR)
+    screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 50))
+    
+    # 关卡网格 (2行5列)
+    level_font = get_font(24)
+    for i in range(10):
+        row = i // 5
+        col = i % 5
+        x = 60 + col * 100
+        y = 150 + row * 80
+        
+        # 关卡框
+        color = (255, 255, 100) if i == selected_level else (100, 100, 100)
+        pygame.draw.rect(screen, color, (x, y, 80, 60), 2)
+        
+        # 关卡号
+        level_text = level_font.render(str(i + 1), True, TEXT_COLOR)
+        text_x = x + 40 - level_text.get_width() // 2
+        text_y = y + 30 - level_text.get_height() // 2
+        screen.blit(level_text, (text_x, text_y))
+    
+    # 说明文字
+    info_font = get_font(20)
+    info_lines = [
+        "使用方向键选择关卡，回车确认",
+        "ESC返回主菜单"
+    ]
+    for i, line in enumerate(info_lines):
+        info_text = info_font.render(line, True, TEXT_COLOR)
+        screen.blit(info_text, (SCREEN_WIDTH // 2 - info_text.get_width() // 2, 350 + i * 30))
+
 # 初始化游戏
-init_game()
+# init_game()  # 注释掉，因为现在从菜单开始
 
 # 绘制游戏元素
 def draw_game():
@@ -202,9 +389,9 @@ def draw_game():
                           3)
     
     # 绘制游戏标题和说明
-    font = get_font(28)
-    title = font.render("推箱子游戏", True, TEXT_COLOR)
-    controls = font.render("方向键移动, R重置", True, TEXT_COLOR)
+    font = get_font(24)
+    title = font.render(f"推箱子游戏 - 第{current_level + 1}关", True, TEXT_COLOR)
+    controls = font.render("方向键移动, R重置, ESC菜单", True, TEXT_COLOR)
     screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 10))
     screen.blit(controls, (SCREEN_WIDTH // 2 - controls.get_width() // 2, SCREEN_HEIGHT - 30))
     
@@ -226,26 +413,87 @@ while running:
             running = False
         
         if event.type == pygame.KEYDOWN:
-            if not game_won:
+            if game_state == "menu":
                 if event.key == pygame.K_UP:
-                    move_player(UP)
+                    selected_menu_item = (selected_menu_item - 1) % 3
                 elif event.key == pygame.K_DOWN:
-                    move_player(DOWN)
-                elif event.key == pygame.K_LEFT:
-                    move_player(LEFT)
-                elif event.key == pygame.K_RIGHT:
-                    move_player(RIGHT)
+                    selected_menu_item = (selected_menu_item + 1) % 3
+                elif event.key == pygame.K_RETURN:
+                    if selected_menu_item == 0:  # 开始游戏
+                        current_level = 0
+                        init_game()
+                        game_state = "playing"
+                        game_won = False
+                    elif selected_menu_item == 1:  # 选择关卡
+                        game_state = "level_select"
+                    elif selected_menu_item == 2:  # 退出游戏
+                        running = False
             
-            # 重置游戏
-            if event.key == pygame.K_r:
-                init_game()
-                game_won = False
+            elif game_state == "level_select":
+                if event.key == pygame.K_LEFT:
+                    selected_level = max(0, selected_level - 1)
+                elif event.key == pygame.K_RIGHT:
+                    selected_level = min(9, selected_level + 1)
+                elif event.key == pygame.K_UP:
+                    selected_level = max(0, selected_level - 5)
+                elif event.key == pygame.K_DOWN:
+                    selected_level = min(9, selected_level + 5)
+                elif event.key == pygame.K_RETURN:
+                    switch_level(selected_level)
+                    game_state = "playing"
+                    game_won = False
+                elif event.key == pygame.K_ESCAPE:
+                    game_state = "menu"
+            
+            elif game_state == "playing":
+                if event.key == pygame.K_ESCAPE:
+                    game_state = "menu"
+                elif not game_won:
+                    if event.key == pygame.K_UP:
+                        move_player(UP)
+                    elif event.key == pygame.K_DOWN:
+                        move_player(DOWN)
+                    elif event.key == pygame.K_LEFT:
+                        move_player(LEFT)
+                    elif event.key == pygame.K_RIGHT:
+                        move_player(RIGHT)
+                
+                # 重置游戏
+                if event.key == pygame.K_r:
+                    init_game()
+                    game_won = False
+                
+                # 下一关
+                if game_won and event.key == pygame.K_SPACE:
+                    if current_level < len(levels) - 1:
+                        switch_level(current_level + 1)
+                        game_won = False
+                    else:
+                        game_state = "menu"
     
-    # 检查游戏胜利
-    game_won = check_win()
-    
-    # 绘制游戏
-    draw_game()
+    # 游戏逻辑和绘制
+    if game_state == "menu":
+        draw_menu()
+    elif game_state == "level_select":
+        draw_level_select()
+    elif game_state == "playing":
+        # 检查游戏胜利
+        game_won = check_win()
+        
+        # 绘制游戏
+        draw_game()
+        
+        # 如果胜利，显示额外信息
+        if game_won:
+            win_font = get_font(24)
+            if current_level < len(levels) - 1:
+                next_text = win_font.render("按空格键进入下一关", True, (100, 255, 100))
+                screen.blit(next_text, (SCREEN_WIDTH // 2 - next_text.get_width() // 2, 
+                                      SCREEN_HEIGHT // 2 + 50))
+            else:
+                complete_text = win_font.render("恭喜通关所有关卡！", True, (100, 255, 100))
+                screen.blit(complete_text, (SCREEN_WIDTH // 2 - complete_text.get_width() // 2, 
+                                          SCREEN_HEIGHT // 2 + 50))
     
     # 更新屏幕
     pygame.display.flip()

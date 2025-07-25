@@ -11,6 +11,8 @@
 ## 🎯 游戏介绍
 
 推箱子（Sokoban）是一个经典的益智游戏，玩家扮演仓库管理员，需要将所有箱子推到指定的目标位置上。游戏看似简单，但需要仔细规划每一步，避免将箱子推到无法移动的位置。
+<img width="834" height="869" alt="image" src="https://github.com/user-attachments/assets/2ac0bb16-f362-4ee4-a9f1-77959020c73b" />
+<img width="834" height="869" alt="image" src="https://github.com/user-attachments/assets/078b8b83-d415-44b1-9e35-69c0ce98434f" />
 
 本游戏特色：
 - 🎮 完整的菜单系统和关卡选择
